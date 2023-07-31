@@ -1,0 +1,24 @@
+{
+    "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+    "description": "Hành động của user đối với sản phẩm",
+    "self": {
+        "vendor": "com.bookshop",
+        "name": "product_action",
+        "format": "jsonschema",
+        "version": "1-0-0"
+    },
+    "type": "object",
+    "properties": {
+        "action": {
+            "type": "string",
+            "enum": ["view", "add", "remove", "purchase", "comment"],
+            "description": "xem, thêm / xóa sản phẩm trong giỏ hàng, mua hay bình luận trên sản phẩm đó"
+        },
+        "extra": {
+            "type": "string",
+            "description": "lưu 1 số thông tin thêm chưa rõ"
+        }
+    },
+    "required": ["action"],
+    "additionalProperties": false
+    }

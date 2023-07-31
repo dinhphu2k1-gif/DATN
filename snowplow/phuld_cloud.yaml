@@ -1,0 +1,146 @@
+services:
+#host 20.196.248.69
+  mysqldb:
+    image: dinhphu/bookshop-backend-mysql:1.1.0
+    container_name: mysqldb
+    # restart: always
+    ports:
+      - 3306:3306
+    # network_mode: host
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.2
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+
+  bookshop-backend:
+    image: dinhphu/bookshop-backend:1.0.1
+    container_name: bookshop-backend
+    # restart: always
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://172.19.0.2:3306/customer-data-platform
+      - BACKEND_HOST=20.196.248.69
+    depends_on:
+      - mysqldb
+    ports:
+      - 10000:10000
+    # network_mode: host
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.3
+    volumes:
+      - ./data/backend/images:/book-shop-web/backend/public/static/images
+
+# các phần phụ trợ liên quan
+  postgresdb:
+    image: dinhphu/iglu-postgres:1.0.0
+    container_name: postgresdb
+    # restart: always
+    ports:
+      - 5432:5432
+    volumes:
+      - ./data/postgres:/var/lib/postgresql
+    # network_mode: host
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.5
+
+  zookeeper:
+    container_name: zookeeper
+    image: confluentinc/cp-zookeeper:latest
+    # restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 2181:2181
+    volumes:
+      - ./data/zookeeper:/var/lib/zookeeper
+    # network_mode: host
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.6
+  
+  kafka1:
+    container_name: kafka1
+    image: confluentinc/cp-kafka:latest
+    # restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - 9092:9092
+#    volumes:
+#      - ./data/kafka1:/var/lib/kafka/data
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.7
+    # network_mode: host
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 20.196.248.69:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://20.196.248.69:9092,PLAINTEXT_HOST://20.196.248.69:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+# snowplow
+  iglu-server:
+    image: dinhphu/snowplow-iglu:1.0.0
+    container_name: iglu-server
+    # restart: always
+    ports:
+      - 8181:8181
+    depends_on:
+      - postgresdb
+    # network_mode: host
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.10
+
+  collector:
+    image: dinhphu/snowplow-collector:1.0.1
+    container_name: collector
+    # restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      - kafka1
+    # network_mode: host
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.11
+  
+  enrich:
+    image: dinhphu/snowplow-enrich:1.0.1
+    container_name: enrich
+    # restart: always
+    depends_on:
+      - kafka1
+      - iglu-server
+    # network_mode: host
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.12
+
+  loader:
+    image: dinhphu/snowplow-loader:1.1.1
+    container_name: loader
+    # restart: always
+    environment:
+      - BOOTSTRAP_SERVERS=20.196.248.69:9092,20.196.248.69:9092
+      - ES_HOSTS=20.196.245.32:9200
+      - MYSQL_HOST=20.196.248.69
+    depends_on:
+      - enrich
+      - kafka1
+    # network_mode: host
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.13
+    
+networks:
+  snowplow:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16

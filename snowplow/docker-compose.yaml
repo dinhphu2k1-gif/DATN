@@ -1,0 +1,285 @@
+services:
+
+# book-shop
+  mysqldb:
+    image: dinhphu/bookshop-backend-mysql:1.1.1
+    container_name: mysqldb
+    # restart: always
+    ports:
+      - 3306:3306
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.2
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+
+  bookshop-backend:
+    image: dinhphu/bookshop-backend:1.0.0
+    container_name: bookshop-backend
+    # restart: always
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://172.19.0.2:3306/customer-data-platform
+    depends_on:
+      - mysqldb
+    ports:
+      - 10000:10000
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.3
+    volumes:
+      - ./data/backend/images:/book-shop-web/backend/public/static/images
+
+  bookshop-frontend:
+    image: dinhphu/bookshop-frontend:1.0.1
+    container_name: bookshop-frontend
+    # restart: always
+    environment:
+      - REACT_APP_BACKEND_HOST=172.19.0.3
+      - REACT_APP_COLLECTOR_HOST=172.19.0.13
+    depends_on:
+      - bookshop-backend
+    ports:
+      - 3000:3000
+    networks:
+      snowplow: 
+        ipv4_address: 172.19.0.4
+
+  bookshop-admin:
+    image: dinhphu/bookshop-admin:1.0.1
+    container_name: bookshop-admin
+    # restart: always
+    environment:
+      - REACT_APP_BACKEND_HOST=bookshop-backend
+    depends_on:
+      - bookshop-backend
+    ports:
+      - 3001:3001
+    networks:
+      snowplow: 
+        ipv4_address: 172.19.0.5
+
+# các phần phụ trợ liên quan
+  postgresdb:
+    image: dinhphu/iglu-postgres:1.0.0
+    container_name: postgresdb
+    # restart: always
+    ports:
+      - 5432:5432
+    networks:
+      snowplow: 
+        ipv4_address: 172.19.0.6
+
+  zookeeper:
+    container_name: zookeeper
+    image: confluentinc/cp-zookeeper:latest
+    # restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.7
+  
+  kafka1:
+    container_name: kafka1
+    image: confluentinc/cp-kafka:latest
+    # restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - 29092:29092
+    networks:
+      snowplow: 
+        ipv4_address: 172.19.0.8
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+
+  kafka2:
+    container_name: kafka2
+    image: confluentinc/cp-kafka:latest
+    # restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - 29093:29093
+    networks:
+      snowplow: 
+        ipv4_address: 172.19.0.9
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9093,PLAINTEXT_HOST://localhost:29093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+
+  elasticsearch1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.1
+    container_name: elasticsearch1
+    hostname: elasticsearch1
+    # restart: always
+    ports: 
+      - "9200:9200"
+    environment:
+      - "node.name=elasticsearch1"
+      - "bootstrap.memory_lock=true"
+      - "cluster.name=es-cluster"
+      - "discovery.seed_hosts=elasticsearch1"
+      - "cluster.initial_master_nodes=elasticsearch1"
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+      - "xpack.security.enabled=false"
+      - "xpack.security.http.ssl.enabled=false"
+      - "xpack.security.transport.ssl.enabled=false"
+    networks:
+      snowplow: 
+        ipv4_address: 172.19.0.10
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      timeout: 10s
+      retries: 30
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  # elasticsearch2:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.6.1
+  #   container_name: elasticsearch2
+  #   hostname: elasticsearch2
+  #   # restart: always
+  #   ports: 
+  #     - "9201:9200"
+  #   environment:
+  #     - "node.name=elasticsearch2"
+  #     - "bootstrap.memory_lock=true"
+  #     - "cluster.name=es-cluster"
+  #     - "discovery.seed_hosts=elasticsearch1"
+  #     - "cluster.initial_master_nodes=elasticsearch1,elasticsearch2"
+  #     - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+  #     - "xpack.security.enabled=false"
+  #     - "xpack.security.http.ssl.enabled=false"
+  #     - "xpack.security.transport.ssl.enabled=false"
+  #   depends_on:
+  #     - elasticsearch1
+  #   networks:
+  #     - snowplow
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:9200"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 30
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 512m
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.6.1
+    container_name: kibana
+    # restart: always
+    environment:
+      - 'ELASTICSEARCH_HOSTS=["http://elasticsearch1:9200"]'
+      - "SERVER_NAME=localhost"
+      - "SERVER_PUBLICBASEURL=http://localhost:5601"
+    ports:
+      - "5601:5601"
+    networks:
+      snowplow: 
+        ipv4_address: 172.19.0.11
+
+# snowplow
+  iglu-server:
+    image: dinhphu/snowplow-iglu:1.0.0
+    container_name: iglu-server
+    # restart: always
+    ports:
+      - 8181:8181
+    depends_on:
+      - postgresdb
+    networks:
+      snowplow: 
+        ipv4_address: 172.19.0.12
+
+  collector:
+    image: dinhphu/snowplow-collector:1.0.0
+    container_name: collector
+    # restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      - kafka1
+    networks:
+      snowplow: 
+        ipv4_address: 172.19.0.13
+  
+  enrich:
+    image: dinhphu/snowplow-enrich:1.0.0
+    container_name: enrich
+    # restart: always
+    depends_on:
+      - kafka1
+      - iglu-server
+    networks:
+      snowplow: 
+        ipv4_address: 172.19.0.14
+
+  # loader:
+  #   image: dinhphu/snowplow-loader:1.1.0
+  #   container_name: loader
+  #   # restart: always
+  #   environment:
+  #     - BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9093
+  #     - ES_HOSTS=elasticsearch1:9200
+  #     - MYSQL_HOST=mysqldb
+  #   depends_on:
+  #     - enrich
+  #     - kafka1
+  #   networks:
+  #     snowplow: 
+  #       ipv4_address: 172.17.0.15
+
+  metabase:
+    image: metabase/metabase
+    container_name: metabase
+    # restart: always
+    # environment:
+      # - MB_DB_TYPE=mysql
+      # - MB_DB_DBNAME=customer-data-platform
+      # - MB_DB_PORT=3306
+      # - MB_DB_USER=book_shop
+      # - MB_DB_PASS=package1107N
+      # - MB_DB_HOST=mysqldb
+    ports:
+      - 4000:3000
+    # depends_on:
+    #   - mysqldb
+    networks:
+      snowplow: 
+        ipv4_address: 172.19.0.16
+
+    
+networks:
+  snowplow:
+    external:
+      name: snowplow
+
+    # driver: bridge
+    # ipam:
+    #   config:
+    #     - subnet: 172.19.0.0/16

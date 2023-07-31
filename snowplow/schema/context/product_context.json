@@ -1,0 +1,43 @@
+{
+    "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+    "description": "Chứa các thông tin của sản phẩm được tương tác",
+    "self": {
+      "vendor": "com.bookshop",
+      "name": "product_context",
+      "format": "jsonschema",
+      "version": "1-0-0"
+    },
+    "type": "object",
+    "properties": {
+      "product_id": {
+          "type": "integer",
+          "description": "định danh của sản phẩm"
+      },
+      "product_name": {
+        "type": "string",
+        "description": "tên của sản phẩm"
+      },
+      "quantity": {
+        "type": "integer",
+        "description": "số lượng sản phẩm được mua"
+      },
+      "price": {
+          "type" : "integer",
+          "description" : "giá của sản phẩm"
+      },
+      "category_id": {
+          "type": "integer",
+          "description": "loại sản phẩm"
+      },
+      "publisher_id": {
+          "type": "integer",
+          "description": "nhà xuất bản"
+      },
+      "author_id": {
+          "type": "integer",
+          "description": "tác giả"
+      }
+    },
+    "required": ["product_id"],
+    "additionalProperties": true
+  }

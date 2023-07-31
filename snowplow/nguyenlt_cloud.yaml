@@ -1,0 +1,131 @@
+services:
+# host 20.196.245.32
+# book-shop
+  bookshop-frontend:
+    image: dinhphu/bookshop-frontend:1.0.1
+    container_name: bookshop-frontend
+    # restart: always
+    environment:
+      - REACT_APP_BACKEND_HOST=20.196.248.69
+      - REACT_APP_COLLECTOR_HOST=20.196.248.69
+    # depends_on:
+    #   - bookshop-backend
+    ports:
+      - 3000:3000
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.3
+
+  bookshop-admin:
+    image: dinhphu/bookshop-admin:1.0.1
+    container_name: bookshop-admin
+    # restart: always
+    environment:
+      - REACT_APP_BACKEND_HOST=20.196.248.69
+    # depends_on:
+    #   - bookshop-backend
+    ports:
+      - 3001:3001
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.4
+
+  kafka2:
+    container_name: kafka2
+    image: confluentinc/cp-kafka:latest
+    # restart: always
+    # depends_on:
+    #   - zookeeper
+    ports:
+      - 9092:9092
+#    volumes:
+#      - ./data/kafka2:/var/lib/kafka/data
+    # network_mode: host
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.8
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: 20.196.248.69:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://20.196.245.32:9092,PLAINTEXT_HOST://20.196.245.32:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  elasticsearch2:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.0.1
+    container_name: elasticsearch2
+    hostname: elasticsearch2
+    # restart: always
+    ports: 
+      - 9200:9200
+    environment:
+      - "node.name=elasticsearch2"
+      - "bootstrap.memory_lock=true"
+      - "cluster.name=es-cluster"
+      - "discovery.seed_hosts=elasticsearch2"
+      - "cluster.initial_master_nodes=elasticsearch2"
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "xpack.security.enabled=false"
+      - "xpack.security.http.ssl.enabled=false"
+      - "xpack.security.transport.ssl.enabled=false"
+#    volumes:
+#      - ./data/es1:/usr/share/elasticsearch/data
+    network_mode: host
+#    networks:
+#      snowplow:
+#        ipv4_address: 172.19.0.10
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 30
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.0.1
+    container_name: kibana
+    # restart: always
+    environment:
+      - 'ELASTICSEARCH_HOSTS=["http://20.196.245.32:9200"]'
+      - "SERVER_NAME=localhost"
+      - "SERVER_PUBLICBASEURL=http://localhost:5601"
+#    volumes:
+#      - ./data/kibana:/usr/share/kibana/data
+    ports:
+      - 5601:5601
+#    networks:
+#      snowplow:
+#        ipv4_address: 172.19.0.11
+
+  metabase:
+    image: metabase/metabase
+    container_name: metabase
+    # restart: always
+#    environment:
+#      - MB_DB_TYPE=mysql
+#      - MB_DB_DBNAME=customer-data-platform
+#      - MB_DB_PORT=3306
+#      - MB_DB_USER=book_shop
+#      - MB_DB_PASS=package1107N
+#      - MB_DB_HOST=20.196.248.69
+    ports:
+      - 4000:3000
+#    depends_on:
+#      - mysqldb
+    networks:
+      - snowplow
+    
+networks:
+  snowplow:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16

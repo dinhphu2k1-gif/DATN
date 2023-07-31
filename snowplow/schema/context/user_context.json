@@ -1,0 +1,51 @@
+{
+    "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+    "description": "Chứa các thông tin của user",
+    "self": {
+      "vendor": "com.bookshop",
+      "name": "user_context",
+      "format": "jsonschema",
+      "version": "1-0-0"
+    },
+    "type": "object",
+    "properties": {
+      "user_id": {
+          "type": [
+              "integer",
+              "null"
+          ],
+          "description": "định danh của user"
+      },
+      "user_name": {
+          "type": [
+              "string",
+              "null"
+          ],
+        "description": "tên của user"
+      },
+      "phone_number": {
+          "type": [
+              "string",
+              "null"
+          ],
+          "description" : "số điện thoại của user",
+          "maxLength": 11
+      },
+      "email": {
+          "type": [
+              "string",
+              "null"
+          ],
+          "description": "email của user"
+      },
+      "address": {
+          "type": [
+              "string",
+              "null"
+          ],
+          "description": "địa chỉ của user"
+      }
+    },
+    "required": ["user_id"],
+    "additionalProperties": false
+  }

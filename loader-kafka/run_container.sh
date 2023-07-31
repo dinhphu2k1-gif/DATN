@@ -1,0 +1,1 @@
+docker run -d -it --name loader -e BOOTSTRAP_SERVERS="kafka1:9092,kafka2:9093" -e ES_HOSTS="elasticsearch1:9200,elasticsearch2:9200" --network snowplow dinhphu/snowplow-loader
