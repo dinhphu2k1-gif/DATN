@@ -1,0 +1,1 @@
+docker run -d -it --name admin -p 3001:3001 -e BACKEND_HOST=backend --network snowplow dinhphu/bookshop-admin

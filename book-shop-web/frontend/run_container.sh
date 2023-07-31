@@ -1,0 +1,1 @@
+docker run -d -it --name frontend -p 3000:3000 -e BACKEND_HOST=backend -e COLLECTOR_HOST=collector --network snowplow dinhphu/bookshop-fe

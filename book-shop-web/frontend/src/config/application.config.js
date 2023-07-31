@@ -1,0 +1,2 @@
+exports.BACKEND_PORT = 10000
+exports.BACKEND_PORT2 = 8180
