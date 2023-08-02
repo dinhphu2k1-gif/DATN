@@ -27,7 +27,7 @@ Sau khi chạy xong, sẽ đi vào bên trong container `hadoop-master` và ch�
 
 ### Streaming Elasticsearch
 
-Sau khi đóng gói mã nguồn, chạy
+Sau khi đóng gói mã nguồn, chạy (đây là job Spark)
 
 ```
 bash bin/run_stream.sh 60 1 enriched
@@ -35,7 +35,7 @@ bash bin/run_stream.sh 60 1 enriched
  để khởi chạy job streaming elasticsearch (load data vào Elasticsearch mỗi 60s/lần)
 
 ### Batch HDFS
- Sau khi đóng gói mã nguồn, chạy
+ Sau khi đóng gói mã nguồn, chạy (đây là job Spark)
 
 ```
 bash bin/run_batch.sh 1800 2 enriched
@@ -43,9 +43,12 @@ bash bin/run_batch.sh 1800 2 enriched
  để khởi chạy job Batch HDFS (load data vào HDFS mỗi 30p/lần)
 
 ### Job Report
-Chạy 
+Chạy (đây là job Spark)
 
 ```
 bash bin/run_report.sh
 ```
 Job sẽ tổng hợp kết quả của ngày hôm nay và lưu vào Mysql
+
+
+**Note**: khi chạy job trên Spark, có thể  báo lỗi not found file `GeoLite2-City.mmdb`, cần lên [git](https://github.com/dinhphu2k1-gif/DATN) vào thư mục [loader-kafka/properties](./loader-kafka/properties/) để tải file này
