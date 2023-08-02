@@ -2,7 +2,7 @@ services:
 
 # book-shop
   mysqldb:
-    image: dinhphu/bookshop-backend-mysql:1.1.1
+    image: dinhphu/bookshop-backend-mysql:1.1.2
     container_name: mysqldb
     # restart: always
     ports:
@@ -14,7 +14,7 @@ services:
       - ./data/mysql:/var/lib/mysql
 
   bookshop-backend:
-    image: dinhphu/bookshop-backend:1.0.0
+    image: dinhphu/bookshop-backend:1.1.1
     container_name: bookshop-backend
     # restart: always
     environment:
@@ -30,7 +30,7 @@ services:
       - ./data/backend/images:/book-shop-web/backend/public/static/images
 
   bookshop-frontend:
-    image: dinhphu/bookshop-frontend:1.0.1
+    image: dinhphu/bookshop-frontend:1.1.2
     container_name: bookshop-frontend
     # restart: always
     environment:
@@ -45,7 +45,7 @@ services:
         ipv4_address: 172.19.0.4
 
   bookshop-admin:
-    image: dinhphu/bookshop-admin:1.0.1
+    image: dinhphu/bookshop-admin:1.0.2
     container_name: bookshop-admin
     # restart: always
     environment:
@@ -258,17 +258,8 @@ services:
     image: metabase/metabase
     container_name: metabase
     # restart: always
-    # environment:
-      # - MB_DB_TYPE=mysql
-      # - MB_DB_DBNAME=customer-data-platform
-      # - MB_DB_PORT=3306
-      # - MB_DB_USER=book_shop
-      # - MB_DB_PASS=package1107N
-      # - MB_DB_HOST=mysqldb
     ports:
       - 4000:3000
-    # depends_on:
-    #   - mysqldb
     networks:
       snowplow: 
         ipv4_address: 172.19.0.16
