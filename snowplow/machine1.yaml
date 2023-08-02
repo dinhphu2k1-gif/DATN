@@ -1,0 +1,123 @@
+services:
+# host 20.214.141.95
+# book-shop
+  bookshop-frontend:
+    image: dinhphu/bookshop-frontend:1.1.2
+    container_name: bookshop-frontend
+    # restart: always
+    environment:
+      - REACT_APP_BACKEND_HOST=52.231.108.82
+      - REACT_APP_COLLECTOR_HOST=52.231.108.82
+    # depends_on:
+    #   - bookshop-backend
+    ports:
+      - 3000:3000
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.3
+
+  bookshop-admin:
+    image: dinhphu/bookshop-admin:1.0.2
+    container_name: bookshop-admin
+    # restart: always
+    environment:
+      - REACT_APP_BACKEND_HOST=52.231.108.82
+    # depends_on:
+    #   - bookshop-backend
+    ports:
+      - 3001:3001
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.4
+
+  kafka2:
+    container_name: kafka2
+    image: confluentinc/cp-kafka:latest
+    restart: always
+    # depends_on:
+    #   - zookeeper
+    ports:
+      - 9092:9092
+    networks:
+      snowplow:
+        ipv4_address: 172.19.0.5
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: 52.231.108.82:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://20.214.141.95:9092,PLAINTEXT_HOST://20.214.141.95:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  elasticsearch1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.16.2
+    container_name: elasticsearch1
+    hostname: elasticsearch1
+    restart: always
+    ports: 
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - "node.name=elasticsearch1"
+      - "bootstrap.memory_lock=true"
+      - "cluster.name=es-cluster"
+      - "discovery.seed_hosts=20.214.141.95"
+      - "network.publish_host=20.214.141.95"
+      - "cluster.initial_master_nodes=20.214.141.95"
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      - "ELASTIC_USERNAME=elastic"
+      - "ELASTIC_PASSWORD=MagicWord"
+      - "xpack.security.enabled=true"
+    networks:
+      snowplow: 
+        ipv4_address: 172.19.0.10
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      timeout: 10s
+      retries: 30
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    deploy:
+      resources:
+        limits:
+          memory: 3g
+
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.16.2
+    container_name: kibana
+    restart: always
+    environment:
+      - 'ELASTICSEARCH_HOSTS=["http://20.214.141.95:9200"]'
+      - "SERVER_NAME=localhost"
+      - "SERVER_PUBLICBASEURL=http://localhost:5601"
+      - "ELASTICSEARCH_USERNAME=elastic"
+      - "ELASTICSEARCH_PASSWORD=MagicWord"
+      - "xpack.security.enabled=true"
+    links:
+       - elasticsearch1
+    ports:
+      - "5601:5601"
+    networks:
+      snowplow: 
+        ipv4_address: 172.19.0.11
+
+  metabase:
+    image: metabase/metabase
+    container_name: metabase
+    # restart: always
+    ports:
+      - 4000:3000
+    networks:
+      snowplow: 
+        ipv4_address: 172.19.0.16
+
+networks:
+  snowplow:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16
