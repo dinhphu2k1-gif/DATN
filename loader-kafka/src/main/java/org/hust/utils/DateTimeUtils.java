@@ -15,7 +15,7 @@ public class DateTimeUtils implements Serializable {
      * Mặc định là ngày hôm nay
      */
     public static String getDate() {
-        return dateFormat.format(new Date().getTime() + 7 * 3600 * 1000);
+        return dateFormat.format(new Date().getTime());
     }
 
     public static String getDate(long time) {

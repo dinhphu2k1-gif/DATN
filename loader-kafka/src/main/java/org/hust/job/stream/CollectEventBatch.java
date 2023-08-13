@@ -1,13 +1,8 @@
 package org.hust.job.stream;
 
-import com.maxmind.geoip2.DatabaseReader;
-import com.maxmind.geoip2.model.CityResponse;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.MapPartitionsFunction;
-import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.types.DataTypes;
@@ -21,16 +16,12 @@ import org.hust.model.event.Event;
 import org.hust.utils.IpLookupUtils;
 import org.hust.utils.KafkaUtils;
 import org.hust.utils.SparkUtils;
-import org.hust.utils.maxmind.MaxMindWrapper;
 import org.joda.time.DateTime;
 import scala.collection.JavaConverters;
 
 import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import java.util.*;
-
-import static org.apache.spark.sql.functions.call_udf;
-import static org.apache.spark.sql.functions.col;
 
 public class CollectEventBatch implements IJobBuilder {
     private SparkUtils sparkUtils;
@@ -46,10 +37,13 @@ public class CollectEventBatch implements IJobBuilder {
     }
 
     public void init() {
-        sparkUtils = new SparkUtils("collect event to log", "yarn", args.getDuration());
+        String taskName = "collect event to log";
+        String groupId = taskName + args.getGroupId();
+
+        sparkUtils = new SparkUtils(taskName, "yarn", args.getDuration());
         spark = sparkUtils.getSparkSession();
 
-        KafkaUtils kafkaUtils = new KafkaUtils(args.getGroupId(), topicList);
+        KafkaUtils kafkaUtils = new KafkaUtils(groupId, topicList);
 
         stream = org.apache.spark.streaming.kafka010.KafkaUtils
                 .createDirectStream(sparkUtils.getJavaStreamingContext(),
