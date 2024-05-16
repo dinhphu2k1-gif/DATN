@@ -5,7 +5,6 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
-import org.hust.config.ConfigInfo;
 
 @Getter
 public class SparkUtils {
@@ -17,8 +16,6 @@ public class SparkUtils {
         sparkSession = SparkSession.builder().appName(jobName)
                 .master(master)
                 .config("spark.sql.session.timeZone", "UTC+7")
-                .config("spark.yarn.access.hadoopFileSystems", "hdfs://" + ConfigInfo.HdfsNamenode.ACTIVE_NAMENODE_HADOOP_23202 + ":9000," +
-                        "hdfs://" + ConfigInfo.HdfsNamenode.ACTIVE_NAMENODE_HADOOP_586 + ":9000")
                 .getOrCreate();
         sparkSession.sparkContext().setLogLevel("ERROR");
 

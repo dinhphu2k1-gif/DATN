@@ -14,17 +14,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>hadoop</id>
-            <url>https://maven.admicro.vn/nexus/content/repositories/hadoop</url>
-        </repository>
-        <repository>
-            <id>hadoop2</id>
-            <url>https://maven.admicro.vn/nexus/content/repositories/ml-group</url>
-        </repository>
-    </repositories>
-
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -138,19 +127,6 @@
             <version>3.3.0</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.vcc.bigdata</groupId>
-            <artifactId>ads-common</artifactId>
-            <version>1.1.2</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>hadoop-core</artifactId>
-                    <groupId>org.apache.hadoop</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-
     </dependencies>
 
     <build>
@@ -162,6 +138,33 @@
                     <source>8</source>
                     <target>8</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.3.1</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>9.3</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>validate</id>
+                        <phase>validate</phase>
+                        <configuration>
+                            <configLocation>checkstyle.xml</configLocation>
+                            <encoding>UTF-8</encoding>
+                            <consoleOutput>true</consoleOutput>
+                            <failsOnError>true</failsOnError>
+                        </configuration>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>

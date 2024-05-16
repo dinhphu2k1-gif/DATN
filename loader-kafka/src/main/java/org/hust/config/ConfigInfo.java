@@ -1,17 +1,12 @@
 package org.hust.config;
 
-import com.vcc.bigdata.util.ActiveHadoopNameNode;
 import org.apache.http.HttpHost;
 import org.hust.utils.HostUtils;
 
-public class ConfigInfo {
-    public static class HdfsNamenode {
-        public static final String ACTIVE_NAMENODE_HADOOP_23202 = ActiveHadoopNameNode.get(new String[]{"192.168.23.202", "192.168.23.203"});
-        public static final String ACTIVE_NAMENODE_HADOOP_586 = ActiveHadoopNameNode.get(new String[]{"172.18.5.86", "172.18.5.87"});
-    }
+public final class ConfigInfo {
 
     public static class Elasticsearch {
-        public final static HttpHost[] ES_HOST = HostUtils.getEsHost();
+        public static final HttpHost[] ES_HOST = HostUtils.getEsHost();
     }
 
     public static class Kafka {
